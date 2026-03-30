@@ -3,7 +3,7 @@ import os
 import importlib
 
 bl_info = {
-    "name": "Interactive Lessons for Blender",
+    "name": "Interactive Modules for Blender",
     "author": "Maui",
     "version": (1, 0),
     "blender": (5, 0, 0),
