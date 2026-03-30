@@ -1,14 +1,15 @@
 import bpy
 import os
+import re
 import importlib
 
 bl_info = {
-    "name": "Interactive Modules for Blender",
+    "name": "Interactive Lessons for Blender",
     "author": "Maui",
     "version": (1, 0),
     "blender": (5, 0, 0),
     "location": "View3D > Sidebar > JKA Tab",
-    "description": "Interactive Modules for Blender which teaches you to use Blender in a unique and playful way.",
+    "description": "Modular lessons for Blender & JKA which teaches you to use Blender in a unique and playful way.",
     "category": "Training",
 }
 
@@ -18,27 +19,26 @@ def get_lessons_enum(self, context):
     folder = os.path.dirname(__file__)
     
     if os.path.exists(folder):
-        files = sorted([f for f in os.listdir(folder) if f.startswith("lesson_") and f.endswith(".py")])
+        files = [f for f in os.listdir(folder) if f.startswith("lesson_") and f.endswith(".py")]
+        
+        def natural_key(string_):
+            return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string_)]
+        
+        files.sort(key=natural_key)
         
         for f in files:
             identifier = f.replace(".py", "")
             full_path = os.path.join(folder, f)
-            
-            # Default name based on filename
             display_name = identifier.replace("_", " ").title()
             
-            # Try to extract bl_label from the file content
             try:
                 with open(full_path, 'r', encoding='utf-8') as file:
                     content = file.read()
-                    if 'bl_label' in content:
-                        # Extract text between quotes after bl_label = 
-                        import re
-                        match = re.search(r'bl_label\s*=\s*["\'](.*?)["\']', content)
-                        if match:
-                            display_name = match.group(1)
-            except Exception as e:
-                print(f"JKA Error reading label from {f}: {e}")
+                    match = re.search(r'bl_label\s*=\s*["\'](.*?)["\']', content)
+                    if match:
+                        display_name = match.group(1)
+            except:
+                pass
 
             items.append((identifier, display_name, f"Start {display_name}"))
     

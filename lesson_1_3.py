@@ -1,8 +1,8 @@
 import bpy
 from . import gui
 
-class JKA_Lesson_1_3(bpy.types.Operator):
-    bl_idname = "view3d.jka_lesson_1_3"
+class JKA_Lesson_01_3(bpy.types.Operator):
+    bl_idname = "view3d.jka_lesson_01_3"
     bl_label = "1.3 Focus & Isolation"
     
     def cleanup(self, context):
@@ -39,5 +39,5 @@ class JKA_Lesson_1_3(bpy.types.Operator):
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
-def register(): bpy.utils.register_class(JKA_Lesson_1_3)
-def unregister(): bpy.utils.unregister_class(JKA_Lesson_1_3)
+def register(): bpy.utils.register_class(JKA_Lesson_01_3)
+def unregister(): bpy.utils.unregister_class(JKA_Lesson_01_3)
