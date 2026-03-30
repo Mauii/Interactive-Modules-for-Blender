@@ -15,7 +15,7 @@ Download this repository as a .zip file.
 Open Blender.
 Go to Edit > Preferences > Add-ons.
 Click Install... and select the downloaded .zip.
-Search for JKA Frankenstein Tutor and enable it by checking the box.
+Search for Interactive Modules for Blender and enable it by checking the box.
 
 **How to Use**:
 Open the Sidebar in the 3D Viewport (Press N).
