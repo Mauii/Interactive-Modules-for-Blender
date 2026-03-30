@@ -6,20 +6,34 @@ import importlib
 bl_info = {
     "name": "Interactive Lessons for Blender",
     "author": "Maui",
-    "version": (1, 0),
+    "version": (1, 1),
     "blender": (5, 0, 0),
-    "location": "View3D > Sidebar > JKA Tab",
+    "location": "View3D > Sidebar > Training Tab",
     "description": "Modular lessons for Blender & JKA which teaches you to use Blender in a unique and playful way.",
     "category": "Training",
 }
 
-# --- LESSON DISCOVERY ---
-def get_lessons_enum(self, context):
+# --- DISCOVERY LOGIC ---
+
+def get_chapters_enum(self, context):
     items = []
     folder = os.path.dirname(__file__)
-    
     if os.path.exists(folder):
-        files = [f for f in os.listdir(folder) if f.startswith("lesson_") and f.endswith(".py")]
+        subdirs = sorted([d for d in os.listdir(folder) if os.path.isdir(os.path.join(folder, d)) and d.startswith("chapter_")])
+        for d in subdirs:
+            name = d.replace("_", " ").title()
+            items.append((d, name, f"Open {name}"))
+    return items if items else [('NONE', 'No Chapters Found', '')]
+
+def get_lessons_enum(self, context):
+    items = []
+    chapter = context.scene.jka_chapter_list
+    if chapter == 'NONE':
+        return [('NONE', 'Select a Chapter first', '')]
+    
+    chapter_folder = os.path.join(os.path.dirname(__file__), chapter)
+    if os.path.exists(chapter_folder):
+        files = [f for f in os.listdir(chapter_folder) if f.startswith("lesson_") and f.endswith(".py")]
         
         def natural_key(string_):
             return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string_)]
@@ -28,7 +42,7 @@ def get_lessons_enum(self, context):
         
         for f in files:
             identifier = f.replace(".py", "")
-            full_path = os.path.join(folder, f)
+            full_path = os.path.join(chapter_folder, f)
             display_name = identifier.replace("_", " ").title()
             
             try:
@@ -39,15 +53,12 @@ def get_lessons_enum(self, context):
                         display_name = match.group(1)
             except:
                 pass
-
-            items.append((identifier, display_name, f"Start {display_name}"))
-    
-    if not items:
-        return [('NONE', 'No Lessons Found', 'Add lesson_*.py files')]
-        
-    return items
+            items.append((identifier, display_name, ""))
+            
+    return items if items else [('NONE', 'No Lessons Found', '')]
 
 # --- UI PANEL ---
+
 class JKA_PT_MainPanel(bpy.types.Panel):
     bl_label = "Interactive Modules for Blender"
     bl_idname = "JKA_PT_main_panel"
@@ -64,36 +75,34 @@ class JKA_PT_MainPanel(bpy.types.Panel):
             return
 
         layout.label(text="Welcome Jedi,")
-        layout.label(text="Select a module")
-        layout.label(text="Select Start Selected Lesson")
+        layout.label(text="Select a Chapter and Module")
         layout.label(text="May Blender be with you!")
 
         layout.separator()
 
-        layout.label(text="Training Modules:")
-        
-        row = layout.row(align=True)
-        row.prop(scene, "jka_lesson_list", text="")
+        # Chapter Selection
+        layout.label(text="1. Choose Chapter:")
+        layout.prop(scene, "jka_chapter_list", text="")
+
+        layout.separator()
+
+        # Lesson Selection
+        layout.label(text="2. Choose Lesson:")
+        layout.prop(scene, "jka_lesson_list", text="")
         
         layout.separator()
         
-        try:
-            current_selection = scene.jka_lesson_list
-        except:
-            return
-
-        if current_selection != 'NONE':
+        if scene.jka_lesson_list != 'NONE' and scene.jka_chapter_list != 'NONE':
             layout.operator("jka.start_lesson", text="Start Selected Lesson", icon='PLAY')
         else:
-            layout.label(text="No modules found", icon='ERROR')
+            layout.label(text="Please select a module", icon='INFO')
 
         layout.separator()
-
         layout.label(text="Didn't you learn enough?")
         layout.label(text="More modules available soon.")
-        
 
 # --- START OPERATOR ---
+
 class JKA_OT_StartLesson(bpy.types.Operator):
     bl_idname = "jka.start_lesson"
     bl_label = "Start JKA Lesson"
@@ -114,45 +123,54 @@ class JKA_OT_StartLesson(bpy.types.Operator):
         return {'FINISHED'}
 
 # --- REGISTRATION ---
+
 classes = (JKA_PT_MainPanel, JKA_OT_StartLesson)
 
 def register():
+    bpy.types.Scene.jka_chapter_list = bpy.props.EnumProperty(
+        name="Chapters", items=get_chapters_enum)
+    
     bpy.types.Scene.jka_lesson_list = bpy.props.EnumProperty(
-        name="Lessons",
-        items=get_lessons_enum
-    )
+        name="Lessons", items=get_lessons_enum)
 
     for cls in classes:
         bpy.utils.register_class(cls)
 
-    folder = os.path.dirname(__file__)
-    for f in os.listdir(folder):
-        if f.startswith("lesson_") and f.endswith(".py"):
-            module_name = f".{f.replace('.py', '')}"
-            try:
-                mod = importlib.import_module(module_name, package=__package__)
-                if hasattr(mod, "register"):
-                    mod.register()
-            except Exception as e:
-                print(f"JKA ERROR: Failed to load {f}: {e}")
+    main_folder = os.path.dirname(__file__)
+    for d in os.listdir(main_folder):
+        if d.startswith("chapter_") and os.path.isdir(os.path.join(main_folder, d)):
+            chapter_path = os.path.join(main_folder, d)
+            for f in os.listdir(chapter_path):
+                if f.startswith("lesson_") and f.endswith(".py"):
+                    module_name = f"{__package__}.{d}.{f.replace('.py', '')}"
+                    try:
+                        mod = importlib.import_module(module_name)
+                        if hasattr(mod, "register"):
+                            mod.register()
+                    except Exception as e:
+                        print(f"JKA ERROR: Failed to load {f}: {e}")
+
 
 def unregister():
-    folder = os.path.dirname(__file__)
-    for f in os.listdir(folder):
-        if f.startswith("lesson_") and f.endswith(".py"):
-            module_name = f".{f.replace('.py', '')}"
-            try:
-                mod = importlib.import_module(module_name, package=__package__)
-                if hasattr(mod, "unregister"):
-                    mod.unregister()
-            except:
-                pass
+    main_folder = os.path.dirname(__file__)
+    for d in os.listdir(main_folder):
+        if d.startswith("chapter_") and os.path.isdir(os.path.join(main_folder, d)):
+            chapter_path = os.path.join(main_folder, d)
+            for f in os.listdir(chapter_path):
+                if f.startswith("lesson_") and f.endswith(".py"):
+                    module_name = f".{d}.{f.replace('.py', '')}"
+                    try:
+                        mod = importlib.import_module(module_name, package=__package__)
+                        if hasattr(mod, "unregister"):
+                            mod.unregister()
+                    except:
+                        pass
 
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
 
-    if hasattr(bpy.types.Scene, "jka_lesson_list"):
-        del bpy.types.Scene.jka_lesson_list
+    del bpy.types.Scene.jka_chapter_list
+    del bpy.types.Scene.jka_lesson_list
 
 if __name__ == "__main__":
     register()
