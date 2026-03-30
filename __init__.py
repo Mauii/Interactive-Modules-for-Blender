@@ -8,7 +8,7 @@ bl_info = {
     "version": (1, 0),
     "blender": (5, 0, 0),
     "location": "View3D > Sidebar > JKA Tab",
-    "description": "Modular lessons for Blender & JKA which teaches you to use Blender in a unique and playful way.",
+    "description": "Interactive Modules for Blender which teaches you to use Blender in a unique and playful way.",
     "category": "Training",
 }
 
