@@ -1,4 +1,4 @@
-Interactive Modules for Blender (Blender Addon)
+Interactive Modules for Blender (**Blender 5.x** Addon)
 A modular, interactive training addon for Blender, specifically designed to teach the fundamentals of Blender and later Frankenstein Modding (kitbashing) for the Jedi Knight Academy (JKA) community.
 
 **Overview**:
