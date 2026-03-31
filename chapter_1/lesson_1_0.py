@@ -10,6 +10,8 @@ class JKA_Lesson_1_0(bpy.types.Operator):
             try: bpy.types.SpaceView3D.draw_handler_remove(bpy.types.jka_draw_handler, 'WINDOW')
             except: pass
             del bpy.types.jka_draw_handler
+        if "Navigation_Target" in bpy.data.objects:
+            bpy.data.objects.remove(bpy.data.objects["Navigation_Target"], do_unlink=True)
         if context.area: context.area.tag_redraw()
 
     def modal(self, context, event):
@@ -32,21 +34,24 @@ class JKA_Lesson_1_0(bpy.types.Operator):
             if event.type in {'WHEELUPMOUSE', 'WHEELDOWNMOUSE'}:
                 self.task_zoom = True
         
-        self.update_guide()
-        return {'PASS_THROUGH'}
+        self.update_guide(); return {'PASS_THROUGH'}
 
     def update_guide(self):
         if not self.task_orbit: self.guide_text = "Hold [MMB] and Move to Orbit"
         elif not self.task_pan: self.guide_text = "Hold [Shift + MMB] to Pan"
         elif not self.task_zoom: self.guide_text = "Scroll Wheel to Zoom"
+        else: self.guide_text = "Navigation mastered! Press ESC to finish."
 
     def draw_callback(self, context):
-        intro = [(22, (0.2, 0.7, 1.0, 1), "LESSON 1.0: CAMERA BASICS"), (16, (1, 1, 1, 1), "Master the 3D viewport navigation."), (16, (1, 1, 1, 1), "Henceforth experiment with everything I show you.")]
-        tasks = [{"done": self.task_orbit, "label": "Orbit [MMB]"}, {"done": self.task_pan, "label": "Pan [Shift + MMB]"}, {"done": self.task_zoom, "label": "Zoom [Scroll wheel]"}]
+        intro = [(22, (0.2, 0.7, 1.0, 1), "LESSON 1.0: CAMERA BASICS"), (16, (1, 1, 1, 1), "Master the 3D viewport navigation.")]
+        tasks = [{"done": self.task_orbit, "label": "Orbit [MMB]"}, {"done": self.task_pan, "label": "Pan [Shift + MMB]"}, {"done": self.task_zoom, "label": "Zoom [Scroll]"}]
         gui.draw_lesson_ui(self, context, intro, tasks, self.guide_text)
 
     def invoke(self, context, event):
         self.cleanup(context)
+        bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete()
+        bpy.ops.mesh.primitive_monkey_add(location=(0, 0, 0))
+        context.active_object.name = "Navigation_Target"
         self.task_orbit = self.task_pan = self.task_zoom = False
         self.sub_state = "WAIT_CLICK"; self.update_guide()
         bpy.types.jka_draw_handler = bpy.types.SpaceView3D.draw_handler_add(self.draw_callback, (context,), 'WINDOW', 'POST_PIXEL')

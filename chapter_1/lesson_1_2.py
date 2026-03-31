@@ -10,6 +10,8 @@ class JKA_Lesson_1_2(bpy.types.Operator):
             try: bpy.types.SpaceView3D.draw_handler_remove(bpy.types.jka_draw_handler, 'WINDOW')
             except: pass
             del bpy.types.jka_draw_handler
+        for n in ["Lesson_Cube", "Lesson_Light", "Lesson_Camera"]:
+            if n in bpy.data.objects: bpy.data.objects.remove(bpy.data.objects[n], do_unlink=True)
         if context.area: context.area.tag_redraw()
 
     def modal(self, context, event):
@@ -20,9 +22,9 @@ class JKA_Lesson_1_2(bpy.types.Operator):
 
         active = context.view_layer.objects.active
         if active and active.select_get():
-            if "Cube" in active.name: self.task_cube = True
-            elif "Light" in active.name: self.task_light = True
-            elif "Camera" in active.name: self.task_camera = True
+            if "Lesson_Cube" in active.name: self.task_cube = True
+            elif "Lesson_Light" in active.name: self.task_light = True
+            elif "Lesson_Camera" in active.name: self.task_camera = True
             self.update_guide()
         return {'PASS_THROUGH'}
 
@@ -39,31 +41,13 @@ class JKA_Lesson_1_2(bpy.types.Operator):
 
     def invoke(self, context, event):
         self.cleanup(context)
-        
-        # --- SCENE SETUP ---
-        objs = bpy.data.objects
-        
-        # Ensure Cube exists
-        if not any(o.type == 'MESH' and "Cube" in o.name for o in objs):
-            bpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))
-            
-        # Ensure Light exists
-        if not any(o.type == 'LIGHT' for o in objs):
-            bpy.ops.object.light_add(type='POINT', location=(5, 5, 5))
-            
-        # Ensure Camera exists
-        if not any(o.type == 'CAMERA' for o in objs):
-            bpy.ops.object.camera_add(location=(7, -7, 5), rotation=(1.1, 0, 0.785))
-
-        # Deselect all to start fresh
+        bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete()
+        bpy.ops.mesh.primitive_cube_add(location=(-2, 0, 0)); context.active_object.name = "Lesson_Cube"
+        bpy.ops.object.light_add(type='POINT', location=(2, 2, 2)); context.active_object.name = "Lesson_Light"
+        bpy.ops.object.camera_add(location=(5, -5, 3)); context.active_object.name = "Lesson_Camera"
         bpy.ops.object.select_all(action='DESELECT')
-
-        self.task_cube = self.task_light = self.task_camera = False
-        self.update_guide()
-        
-        bpy.types.jka_draw_handler = bpy.types.SpaceView3D.draw_handler_add(
-            self.draw_callback, (context,), 'WINDOW', 'POST_PIXEL'
-        )
+        self.task_cube = self.task_light = self.task_camera = False; self.update_guide()
+        bpy.types.jka_draw_handler = bpy.types.SpaceView3D.draw_handler_add(self.draw_callback, (context,), 'WINDOW', 'POST_PIXEL')
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 

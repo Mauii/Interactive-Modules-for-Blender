@@ -88,8 +88,8 @@ class JKA_Lesson_1_18(bpy.types.Operator):
         tasks = [
             {"done": self.task_tool, "label": "Activate Measure Tool"},
             {"done": self.task_measure, "label": "Snap-Measure [CTRL]"},
-            {"done": self.task_switch_back, "label": "Switch back to Select"},
-            {"done": self.task_annotate, "label": "Draw Annotation [D]"}
+            {"done": self.task_switch_back, "label": "Switch back to Select [W]"},
+            {"done": self.task_annotate, "label": "Draw Annotation [Hold D + Hold Left Click + Move Mouse]"}
         ]
         gui.draw_lesson_ui(self, context, intro, tasks, self.guide_text)
 

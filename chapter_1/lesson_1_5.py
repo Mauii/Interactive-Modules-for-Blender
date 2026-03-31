@@ -11,7 +11,8 @@ class JKA_Lesson_1_5(bpy.types.Operator):
             except: pass
             del bpy.types.jka_draw_handler
         for n in ["User_Cube", "TARGET_CUBE"]:
-            if n in bpy.data.objects: bpy.data.objects.remove(bpy.data.objects[n], do_unlink=True)
+            if n in bpy.data.objects: 
+                bpy.data.objects.remove(bpy.data.objects[n], do_unlink=True)
         if context.area: context.area.tag_redraw()
 
     def modal(self, context, event):
@@ -30,17 +31,23 @@ class JKA_Lesson_1_5(bpy.types.Operator):
 
     def update_guide(self):
         if not self.task_snap_on: self.guide_text = "Enable Snapping [Shift + Tab]"
-        elif not self.task_aligned: self.guide_text = "Align cube against target"
+        elif not self.task_aligned: self.guide_text = "Align white cube against golden target cube"
+        else: self.guide_text = "Well done! Press ESC to finish."
 
     def draw_callback(self, context):
         intro = [(22, (0.2, 0.7, 1.0, 1), "LESSON 1.5: SNAPPING"), (16, (1, 1, 1, 1), "Stick objects together perfectly.")]
-        tasks = [{"done": self.task_snap_on, "label": "Enable Snap"}, {"done": self.task_aligned, "label": "Align"}]
+        tasks = [{"done": self.task_snap_on, "label": "Enable Snap [Shift+Tab]"}, {"done": self.task_aligned, "label": "Align Objects"}]
         gui.draw_lesson_ui(self, context, intro, tasks, self.guide_text)
 
     def invoke(self, context, event):
-        self.cleanup(context); bpy.ops.mesh.primitive_cube_add(location=(0,0,0)); u = context.active_object; u.name = "User_Cube"
+        self.cleanup(context)
+        bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete()
+        
+        bpy.ops.mesh.primitive_cube_add(location=(0,0,0)); u = context.active_object; u.name = "User_Cube"
         bpy.ops.mesh.primitive_cube_add(location=(4,0,0)); t = context.active_object; t.name = "TARGET_CUBE"
-        m = bpy.data.materials.new(name="G"); m.diffuse_color=(1,.8,0,1); t.data.materials.append(m)
+        m = bpy.data.materials.new(name="Gold"); m.diffuse_color=(1,.8,0,1); t.data.materials.append(m)
+        
+        bpy.ops.object.select_all(action='DESELECT'); u.select_set(True); context.view_layer.objects.active = u
         self.task_snap_on = self.task_aligned = False; self.update_guide()
         bpy.types.jka_draw_handler = bpy.types.SpaceView3D.draw_handler_add(self.draw_callback, (context,), 'WINDOW', 'POST_PIXEL')
         context.window_manager.modal_handler_add(self)

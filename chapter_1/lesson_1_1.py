@@ -10,6 +10,8 @@ class JKA_Lesson_1_1(bpy.types.Operator):
             try: bpy.types.SpaceView3D.draw_handler_remove(bpy.types.jka_draw_handler, 'WINDOW')
             except: pass
             del bpy.types.jka_draw_handler
+        if "View_Target" in bpy.data.objects:
+            bpy.data.objects.remove(bpy.data.objects["View_Target"], do_unlink=True)
         if context.area: context.area.tag_redraw()
 
     def modal(self, context, event):
@@ -19,13 +21,13 @@ class JKA_Lesson_1_1(bpy.types.Operator):
             return {'CANCELLED'}
 
         if event.value == 'PRESS':
-            if event.type == 'NUMPAD_1':
+            if event.type in {'NUMPAD_1', 'ONE'}:
                 if event.ctrl: self.task_back = True
                 else: self.task_front = True
-            elif event.type == 'NUMPAD_3':
+            elif event.type in {'NUMPAD_3', 'THREE'}:
                 if event.ctrl: self.task_left = True
                 else: self.task_right = True
-            elif event.type == 'NUMPAD_7':
+            elif event.type in {'NUMPAD_7', 'SEVEN'}:
                 if event.ctrl: self.task_bottom = True
                 else: self.task_top = True
             self.update_guide()
@@ -36,13 +38,23 @@ class JKA_Lesson_1_1(bpy.types.Operator):
 
     def draw_callback(self, context):
         intro = [(22, (0.2, 0.7, 1.0, 1), "LESSON 1.1: STANDARD VIEWS"), (16, (1, 1, 1, 1), "Fixed camera directions.")]
-        tasks = [{"done": self.task_front, "label": "Front [1]"}, {"done": self.task_back, "label": "Back [Ctrl+1]"}, 
-                 {"done": self.task_right, "label": "Right [3]"}, {"done": self.task_left, "label": "Left [Ctrl+3]"}, 
-                 {"done": self.task_top, "label": "Top [7]"}, {"done": self.task_bottom, "label": "Bottom [Ctrl+7]"}]
+        # Hier zijn de hotkeys weer toegevoegd aan de labels
+        tasks = [
+            {"done": self.task_front, "label": "Front [1]"}, 
+            {"done": self.task_back, "label": "Back [Ctrl + 1]"}, 
+            {"done": self.task_right, "label": "Right [3]"}, 
+            {"done": self.task_left, "label": "Left [Ctrl + 3]"}, 
+            {"done": self.task_top, "label": "Top [7]"}, 
+            {"done": self.task_bottom, "label": "Bottom [Ctrl + 7]"}
+        ]
         gui.draw_lesson_ui(self, context, intro, tasks, self.guide_text)
 
     def invoke(self, context, event):
-        self.cleanup(context); self.task_front = self.task_back = self.task_right = self.task_left = self.task_top = self.task_bottom = False
+        self.cleanup(context)
+        bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete()
+        bpy.ops.mesh.primitive_monkey_add(location=(0, 0, 0))
+        context.active_object.name = "View_Target"
+        self.task_front = self.task_back = self.task_right = self.task_left = self.task_top = self.task_bottom = False
         self.update_guide()
         bpy.types.jka_draw_handler = bpy.types.SpaceView3D.draw_handler_add(self.draw_callback, (context,), 'WINDOW', 'POST_PIXEL')
         context.window_manager.modal_handler_add(self)
